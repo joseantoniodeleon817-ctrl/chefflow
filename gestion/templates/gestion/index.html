@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChefFlow - Punto de Venta</title>
+    <link rel="stylesheet" href="/static/gestion/css/style.css">
+</head>
+<body>
+
+    <header class="header">
+        <h1>🍽️ ChefFlow</h1>
+        <p>Sistema de Gestión Avanzada para Restaurantes</p>
+    </header>
+
+    <main class="container">
+
+        <!-- ========================================================= -->
+        <!-- Mensajes del sistema (éxito, error, alertas de inventario) -->
+        <!-- ========================================================= -->
+        {% if messages %}
+            <div class="mensajes">
+                {% for message in messages %}
+                    <div class="alerta alerta-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="grid">
+
+            <!-- ============================= -->
+            <!-- Formulario: Registrar Pedido -->
+            <!-- ============================= -->
+            <section class="card">
+                <h2>Registrar Nuevo Pedido</h2>
+                <form action="{% url 'registrar_pedido' %}" method="POST">
+                    {% csrf_token %}
+
+                    <label for="usuario_id">Usuario (Mesero):</label>
+                    <select name="usuario_id" id="usuario_id" required>
+                        <option value="">-- Seleccione --</option>
+                        {% for usuario in usuarios %}
+                            <option value="{{ usuario.id }}">{{ usuario.nombre }} ({{ usuario.rol }})</option>
+                        {% endfor %}
+                    </select>
+
+                    <label for="insumo_id">Producto / Insumo:</label>
+                    <select name="insumo_id" id="insumo_id" required>
+                        <option value="">-- Seleccione --</option>
+                        {% for insumo in insumos %}
+                            <option value="{{ insumo.id }}" data-stock="{{ insumo.stock_actual }}">
+                                {{ insumo.descripcion }} (Stock: {{ insumo.stock_actual }})
+                            </option>
+                        {% endfor %}
+                    </select>
+
+                    <label for="mesa">Número de Mesa:</label>
+                    <input type="number" name="mesa" id="mesa" min="1" required>
+
+                    <label for="cantidad">Cantidad:</label>
+                    <input type="number" name="cantidad" id="cantidad" min="1" value="1" required>
+
+                    <button type="submit" class="btn-principal">Registrar Pedido</button>
+                </form>
+            </section>
+
+            <!-- ============================= -->
+            <!-- Panel: Estado del Inventario  -->
+            <!-- ============================= -->
+            <section class="card">
+                <h2>Estado del Inventario</h2>
+                <table class="tabla">
+                    <thead>
+                        <tr>
+                            <th>Insumo</th>
+                            <th>Stock actual</th>
+                            <th>Stock mínimo</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-inventario">
+                        {% for insumo in insumos %}
+                        <tr class="{% if insumo.esta_bajo_stock %}fila-alerta{% endif %}">
+                            <td>{{ insumo.descripcion }}</td>
+                            <td>{{ insumo.stock_actual }}</td>
+                            <td>{{ insumo.stock_minimo }}</td>
+                            <td>
+                                {% if insumo.esta_bajo_stock %}
+                                    <span class="badge badge-peligro">⚠️ Stock bajo</span>
+                                {% else %}
+                                    <span class="badge badge-ok">✅ OK</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
+
+        </div>
+
+        <!-- ============================= -->
+        <!-- Últimos pedidos registrados   -->
+        <!-- ============================= -->
+        <section class="card">
+            <h2>Pedidos Recientes</h2>
+            <table class="tabla">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Mesa</th>
+                        <th>Insumo</th>
+                        <th>Cantidad</th>
+                        <th>Usuario</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pedido in pedidos_recientes %}
+                    <tr>
+                        <td>{{ pedido.id }}</td>
+                        <td>{{ pedido.mesa }}</td>
+                        <td>{{ pedido.insumo.descripcion }}</td>
+                        <td>{{ pedido.cantidad }}</td>
+                        <td>{{ pedido.usuario.nombre }}</td>
+                        <td>{{ pedido.fecha_hora|date:"d/m/Y H:i" }}</td>
+                        <td>{{ pedido.get_estado_display }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7">No hay pedidos registrados aún.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+
+    </main>
+
+    <script src="/static/gestion/js/pedidos.js"></script>
+</body>
+</html>
